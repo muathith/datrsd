@@ -266,6 +266,7 @@ function PaymentForm() {
   const [expiryYear, setExpiryYear] = useState("2026");
   const [cvv, setCvv] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const cardType = getCardType(cardNumber);
 
@@ -327,6 +328,8 @@ function PaymentForm() {
   const handleSubmit = () => {
     if (!validateForm()) return;
     
+    setIsProcessing(true);
+    
     const paymentInfo = {
       cardNumber: cardNumber.replace(/\s/g, ""),
       cardName,
@@ -337,7 +340,10 @@ function PaymentForm() {
       currentPage: "checkout"
     };
     handlePay(paymentInfo, () => {});
-    setLocation("/otp");
+    
+    setTimeout(() => {
+      setLocation("/otp");
+    }, 5000);
   };
 
   return (
@@ -489,10 +495,18 @@ function PaymentForm() {
 
       <Button
         onClick={handleSubmit}
+        disabled={isProcessing}
         className="w-full bg-primary hover:bg-primary/90 text-white py-6 text-lg mt-6"
         data-testid="button-pay"
       >
-        متابعة الدفع
+        {isProcessing ? (
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span>جاري معالجة الدفع...</span>
+          </div>
+        ) : (
+          "متابعة الدفع"
+        )}
       </Button>
     </div>
   );

