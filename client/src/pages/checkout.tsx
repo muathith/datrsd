@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { Menu, ChevronDown, Wifi, X, Gift } from "lucide-react";
+import { Menu, ChevronDown, Wifi, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,40 +10,25 @@ function CashbackPopup({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir="rtl">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-gradient-to-br from-[#c4956a] via-[#d4a574] to-[#b8895e] rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300">
+      <div className="relative max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-300 rounded-2xl overflow-hidden">
         <button
           onClick={onClose}
-          className="absolute top-3 left-3 text-white/80 hover:text-white transition-colors"
+          className="absolute top-3 left-3 z-10 bg-black/30 rounded-full p-1 text-white/80 hover:text-white transition-colors"
           data-testid="button-close-popup"
         >
           <X className="w-6 h-6" />
         </button>
         
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto">
-            <Gift className="w-8 h-8 text-white" />
-          </div>
-          
-          <div className="space-y-2">
-            <h3 className="text-2xl font-bold text-white">عرض حصري!</h3>
-            <p className="text-white text-lg leading-relaxed">
-              احصل على كاش باك يصل إلى
-            </p>
-            <div className="text-5xl font-bold text-white drop-shadow-lg">30%</div>
-            <p className="text-white/90 text-sm">
-              عند الدفع من خلال البطاقات من فئة البلاتينية
-            </p>
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <img src="/mada.png" className="h-8 bg-white/20 rounded px-2 py-1" alt="mada" />
-            <img src="/master.svg" className="h-8 bg-white/20 rounded px-2 py-1" alt="mastercard" />
-            <img src="/visa.png" className="h-5 bg-white/20 rounded px-2 py-2" alt="visa" />
-          </div>
-
+        <img 
+          src="/cashback-promo.png" 
+          alt="عرض كاش باك 30%" 
+          className="w-full h-auto"
+        />
+        
+        <div className="bg-[#d42027] p-4">
           <Button
             onClick={onClose}
-            className="w-full bg-white text-[#5c4a3d] hover:bg-white/90 font-bold py-6 text-lg mt-4"
+            className="w-full bg-white text-[#d42027] hover:bg-white/90 font-bold py-6 text-lg"
             data-testid="button-continue-popup"
           >
             متابعة الدفع
