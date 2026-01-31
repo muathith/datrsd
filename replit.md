@@ -78,3 +78,12 @@ Preferred communication style: Simple, everyday language.
 - **class-variance-authority**: Component variant styling
 - **date-fns**: Date manipulation
 - **embla-carousel-react**: Carousel functionality
+
+## Email Confirmation (Resend)
+
+This project sends a registration confirmation email via Resend using the backend endpoint `POST /api/send-confirmation-email`.
+
+Required environment variables:
+
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`

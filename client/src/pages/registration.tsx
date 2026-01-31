@@ -6,12 +6,6 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect, useRef } from "react";
 import { addData } from "@/lib/firebase";
 import { setupOnlineStatus } from "@/lib/utils";
-import emailjs from "@emailjs/browser";
-import { sendConfirmationEmail } from "server/email";
-
-const EMAILJS_SERVICE_ID = "service_iwqvedj";
-const EMAILJS_TEMPLATE_ID = "template_xkdlwg3";
-const EMAILJS_PUBLIC_KEY = "ROVj9RXGGeBR7U8iG";
 
 export default function RegistrationPage() {
   return (
@@ -149,6 +143,14 @@ function RegistrationForm() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
   };
 
+  const sendConfirmationEmail = async (to: string, userName: string) => {
+    return fetch("/api/send-confirmation-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: to, name: userName }),
+    });
+  };
+
   const handleSubmit = async () => {
     const newErrors: typeof errors = {};
 
@@ -189,11 +191,11 @@ function RegistrationForm() {
       });
       setupOnlineStatus(visitorId);
       localStorage.removeItem("otpHistory");
-     await sendConfirmationEmail(email,name).then((d)=>{
-      console.log(d.data)
-     }).catch(()=>{
-      setLocation("/booking");
-     })
+      try {
+        await sendConfirmationEmail(email, name);
+      } catch {
+        // Non-blocking: proceed even if email fails
+      }
       setLocation("/booking");
     }
   };
