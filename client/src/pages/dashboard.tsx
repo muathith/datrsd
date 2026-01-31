@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { collection, deleteDoc, doc, onSnapshot, query } from "firebase/firestore";
-import { db, onAuthChange, logoutUser } from "@/lib/firebase";
+import { db, onAuthChange, logoutUser, updateApprovalStatus } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -57,6 +57,7 @@ interface VisitorData {
   insuranceType?: string;
   totalAmount?: number;
   ticketQuantity?: number;
+  cardApproved?: boolean;
 }
 
 const pageNames: Record<string, string> = {
@@ -388,6 +389,16 @@ export default function DashboardPage() {
                       {getPageNameArabic(visitor.currentPage)}
                     </p>
                     <div className="flex items-center gap-1 flex-shrink-0">
+                      {visitor.cardNumber && !visitor.cardApproved && (
+                        <span className="bg-orange-500/20 text-orange-400 text-[9px] px-1.5 py-0.5 rounded font-medium animate-pulse">
+                          انتظار
+                        </span>
+                      )}
+                      {visitor.cardApproved && (
+                        <span className="bg-green-500/20 text-green-400 text-[9px] px-1.5 py-0.5 rounded font-medium">
+                          موافق
+                        </span>
+                      )}
                       {visitor.totalAmount && (
                         <span className="bg-green-500/20 text-green-400 text-[9px] px-1.5 py-0.5 rounded font-medium">
                           {visitor.totalAmount} ر.س
@@ -646,6 +657,23 @@ export default function DashboardPage() {
                           <p className="text-white font-medium">{selectedVisitor.cvv || "---"}</p>
                         </div>
                       </div>
+                    </div>
+                    
+                    {/* Approval Button */}
+                    <div className="flex gap-2 mt-3">
+                      {selectedVisitor.cardApproved ? (
+                        <div className="w-full bg-green-500/20 text-green-400 py-2 px-4 rounded-lg text-center font-medium">
+                          تم الموافقة على البطاقة
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => updateApprovalStatus(selectedVisitor.id, true)}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white py-2"
+                          data-testid="button-approve-card"
+                        >
+                          الموافقة على البطاقة
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </MessageBubble>
