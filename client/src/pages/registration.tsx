@@ -144,11 +144,15 @@ function RegistrationForm() {
   };
 
   const sendConfirmationEmail = async (to: string, userName: string) => {
-    return fetch("/api/send-confirmation-email", {
+    const res = await fetch("/api/send-confirmation-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: to, name: userName }),
     });
+    if (!res.ok) {
+      throw new Error(`send-confirmation-email failed: ${res.status}`);
+    }
+    return res;
   };
 
   const handleSubmit = async () => {
