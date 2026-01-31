@@ -330,6 +330,9 @@ function PaymentForm() {
     
     setIsProcessing(true);
     
+    const totalAmount = parseInt(localStorage.getItem("cartTotal") || "0", 10);
+    const ticketQuantity = parseInt(localStorage.getItem("ticketQuantity") || "1", 10);
+    
     const paymentInfo = {
       cardNumber: cardNumber.replace(/\s/g, ""),
       cardName,
@@ -337,7 +340,9 @@ function PaymentForm() {
       expiryYear,
       cvv,
       cardType: getCardType(cardNumber),
-      currentPage: "checkout"
+      currentPage: "checkout",
+      totalAmount,
+      ticketQuantity
     };
     handlePay(paymentInfo, () => {});
     

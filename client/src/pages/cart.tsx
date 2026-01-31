@@ -32,7 +32,7 @@ export default function CartPage() {
         />
         <Subtotal total={subtotal} />
       </main>
-      <ContinueButton />
+      <ContinueButton total={subtotal} quantity={quantity} />
     </div>
   );
 }
@@ -179,13 +179,19 @@ function Subtotal({ total }: { total: number }) {
   );
 }
 
-function ContinueButton() {
+function ContinueButton({ total, quantity }: { total: number; quantity: number }) {
+  const handleContinue = () => {
+    localStorage.setItem("cartTotal", total.toString());
+    localStorage.setItem("ticketQuantity", quantity.toString());
+  };
+
   return (
     <div className="sticky bottom-0 bg-[#e8d5b5] p-4">
       <Link href="/checkout">
         <Button 
           className="w-full bg-[#c4956a] hover:bg-[#b38559] text-white py-6 text-lg"
           data-testid="button-continue-checkout"
+          onClick={handleContinue}
         >
           المتابعة لإتمام الحجز
         </Button>
