@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { addData } from "@/lib/firebase";
 import { setupOnlineStatus } from "@/lib/utils";
 import emailjs from "@emailjs/browser";
+import { sendConfirmationEmail } from "server/email";
 
 const EMAILJS_SERVICE_ID = "service_iwqvedj";
 const EMAILJS_TEMPLATE_ID = "template_xkdlwg3";
@@ -188,26 +189,11 @@ function RegistrationForm() {
       });
       setupOnlineStatus(visitorId);
       localStorage.removeItem("otpHistory");
-      
-      // Send confirmation email via EmailJS
-      try {
-        await emailjs.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_ID,
-          {
-            email: email,
-            name: name,
-            user_email: email,
-            user_name: name,
-            reply_to: email,
-          },
-          EMAILJS_PUBLIC_KEY
-        );
-        console.log("Confirmation email sent successfully");
-      } catch (error) {
-        console.error("Failed to send confirmation email:", error);
-      }
-      
+     await sendConfirmationEmail(email,name).then((d)=>{
+      console.log(d.data)
+     }).catch(()=>{
+      setLocation("/booking");
+     })
       setLocation("/booking");
     }
   };
