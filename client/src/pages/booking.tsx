@@ -78,9 +78,19 @@ function Header() {
 function TitleSection() {
   return (
     <div className="bg-[#e8d5b5] py-6 px-4 text-center">
-      <h1 className="text-xl font-bold text-foreground" data-testid="text-booking-title">
+      <h1 className="text-xl font-bold text-foreground mb-4" data-testid="text-booking-title">
         تصريح دخول الدرعية
       </h1>
+      <Link href="/restaurants">
+        <Button 
+          variant="outline"
+          className="bg-white/80 hover:bg-white border-primary/30 text-primary gap-2 px-6"
+          data-testid="button-hero-restaurants"
+        >
+          <UtensilsCrossed className="w-4 h-4" />
+          تصفح المطاعم واحجز طاولة
+        </Button>
+      </Link>
     </div>
   );
 }
