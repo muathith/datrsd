@@ -385,9 +385,9 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-2 mt-0.5">
-                    <p className="text-xs text-[#8696a0] truncate">
+                    <span className="bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0.5 rounded font-medium">
                       {getPageNameArabic(visitor.currentPage)}
-                    </p>
+                    </span>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {visitor.cardNumber && !visitor.cardApproved && (
                         <span className="bg-orange-500/20 text-orange-400 text-[9px] px-1.5 py-0.5 rounded font-medium animate-pulse">
