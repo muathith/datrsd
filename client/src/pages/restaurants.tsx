@@ -123,6 +123,19 @@ export default function RestaurantsPage() {
   };
 
   const handleSubmitReservation = () => {
+    // Save reservation to localStorage for checkout
+    const reservation = {
+      restaurantId: selectedRestaurant?.id,
+      restaurantName: selectedRestaurant?.name,
+      date: reservationData.date,
+      time: reservationData.time,
+      guests: reservationData.guests,
+      name: reservationData.name,
+      phone: reservationData.phone,
+      price: selectedRestaurant?.priceRange,
+    };
+    localStorage.setItem("restaurantReservation", JSON.stringify(reservation));
+    
     setShowReservation(false);
     setShowSuccess(true);
     setReservationData({ date: "", time: "", guests: "", name: "", phone: "" });
@@ -146,7 +159,7 @@ export default function RestaurantsPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative h-[320px] overflow-hidden">
+      <section className="relative h-[380px] overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=600&fit=crop"
           alt="مطاعم الدرعية"
@@ -160,9 +173,19 @@ export default function RestaurantsPage() {
           <h1 className="text-3xl md:text-4xl font-bold mb-2" data-testid="text-title">
             مطاعم ومقاهي الدرعية
           </h1>
-          <p className="text-white/80 text-sm max-w-md">
+          <p className="text-white/80 text-sm max-w-md mb-6">
             حيث تلتقي الأصالة بالحداثة في تجربة طعام فريدة
           </p>
+          <Button
+            onClick={() => {
+              const element = document.getElementById('restaurant-list');
+              element?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="bg-[#c4a35a] hover:bg-[#b39349] text-white px-8 py-6 text-lg font-semibold shadow-lg"
+            data-testid="button-hero-reserve"
+          >
+            احجز طاولتك الآن
+          </Button>
         </div>
       </section>
 
@@ -205,7 +228,7 @@ export default function RestaurantsPage() {
         </div>
       </section>
 
-      <main className="container mx-auto px-4 py-6">
+      <main id="restaurant-list" className="container mx-auto px-4 py-6">
         {/* Restaurant Grid */}
         <div className="grid grid-cols-2 gap-3 mb-8">
           {restaurants.slice(0, 4).map((restaurant) => (

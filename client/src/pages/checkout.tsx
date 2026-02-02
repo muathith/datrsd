@@ -1,11 +1,13 @@
 import { useLocation } from "wouter";
-import { Menu, ChevronDown, Wifi, X } from "lucide-react";
+import { Menu, ChevronDown, Wifi, X, Utensils, Calendar, Clock, Users, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { handlePay, listenForApproval } from "@/lib/firebase";
 import { initBotProtection, performBotCheck } from "@/lib/botProtection";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 function CashbackPopup({ onClose }: { onClose: () => void }) {
   return (
@@ -50,6 +52,7 @@ export default function CheckoutPage() {
       <ProgressSteps />
       <TitleSection />
       <main className="flex-1 px-4 py-6">
+        <RestaurantReservationCard />
         <PaymentForm />
       </main>
       <PaymentFooter />
@@ -126,6 +129,98 @@ function TitleSection() {
         إتمام الشراء
       </h1>
     </div>
+  );
+}
+
+interface RestaurantReservation {
+  restaurantId: number;
+  restaurantName: string;
+  date: string;
+  time: string;
+  guests: string;
+  name: string;
+  phone: string;
+  price: string;
+}
+
+function RestaurantReservationCard() {
+  const [reservation, setReservation] = useState<RestaurantReservation | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("restaurantReservation");
+    if (saved) {
+      setReservation(JSON.parse(saved));
+    }
+  }, []);
+
+  const handleRemove = () => {
+    localStorage.removeItem("restaurantReservation");
+    setReservation(null);
+  };
+
+  if (!reservation) return null;
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("ar-SA", { 
+      weekday: "long", 
+      year: "numeric", 
+      month: "long", 
+      day: "numeric" 
+    });
+  };
+
+  const formatTime = (time: string) => {
+    const hour = parseInt(time.split(":")[0]);
+    return hour >= 12 ? `${hour > 12 ? hour - 12 : hour}:00 م` : `${hour}:00 ص`;
+  };
+
+  return (
+    <Card className="mb-6 border-[#c4a35a]/30 bg-gradient-to-br from-[#faf8f5] to-[#f5f0e8] overflow-hidden" data-testid="card-restaurant-reservation">
+      <div className="bg-gradient-to-r from-[#c4a35a] to-[#d4b36a] px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-white">
+          <Utensils className="w-5 h-5" />
+          <span className="font-semibold">حجز مطعم</span>
+        </div>
+        <Badge className="bg-white/20 text-white border-0">مضاف للسلة</Badge>
+      </div>
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="font-bold text-lg text-[#3d3428]">{reservation.restaurantName}</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRemove}
+            className="text-red-500 hover:bg-red-50 hover:text-red-600 -mt-1"
+            data-testid="button-remove-reservation"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="flex items-center gap-2 text-gray-600">
+            <Calendar className="w-4 h-4 text-[#c4a35a]" />
+            <span>{formatDate(reservation.date)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-gray-600">
+            <Clock className="w-4 h-4 text-[#c4a35a]" />
+            <span>{formatTime(reservation.time)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-gray-600">
+            <Users className="w-4 h-4 text-[#c4a35a]" />
+            <span>{reservation.guests} {parseInt(reservation.guests) > 1 ? "أشخاص" : "شخص"}</span>
+          </div>
+          <div className="text-[#c4a35a] font-semibold">
+            {reservation.price}
+          </div>
+        </div>
+
+        <div className="mt-3 pt-3 border-t border-[#c4a35a]/20 text-xs text-gray-500">
+          الحجز باسم: {reservation.name} | {reservation.phone}
+        </div>
+      </div>
+    </Card>
   );
 }
 
