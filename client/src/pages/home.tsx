@@ -1,4 +1,13 @@
-import { Menu, MapPin, Calendar, Clock, ArrowLeft, X, ChevronDown, Sparkles } from "lucide-react";
+import {
+  Menu,
+  MapPin,
+  Calendar,
+  Clock,
+  ArrowLeft,
+  X,
+  ChevronDown,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "wouter";
@@ -40,8 +49,8 @@ function Header() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const menuItems = [
@@ -55,7 +64,9 @@ function Header() {
 
   return (
     <>
-      <header className={`fixed top-0 z-50 left-0 right-0 transition-all duration-500 ${scrolled ? 'bg-[#2a2318]/95 backdrop-blur-md shadow-lg' : 'bg-transparent'}`}>
+      <header
+        className={`fixed top-0 z-50 left-0 right-0 transition-all duration-500 ${scrolled ? "bg-[#2a2318]/95 backdrop-blur-md shadow-lg" : "bg-transparent"}`}
+      >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between gap-4 h-16">
             <div className="flex items-center gap-2">
@@ -74,7 +85,7 @@ function Header() {
               <img
                 src="/logo-white.svg"
                 alt="الدرعية"
-                className={`transition-all duration-300 ${scrolled ? 'h-10' : 'h-14'} my-2`}
+                className={`transition-all duration-300 ${scrolled ? "h-10" : "h-14"} my-2`}
                 data-testid="img-logo"
               />
             </div>
@@ -93,12 +104,17 @@ function Header() {
         </div>
       </header>
 
-      <div className={`fixed inset-0 z-[100] transition-opacity duration-300 ${menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} data-testid="menu-overlay">
-        <div 
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+      <div
+        className={`fixed inset-0 z-[100] transition-opacity duration-300 ${menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+        data-testid="menu-overlay"
+      >
+        <div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           onClick={() => setMenuOpen(false)}
         />
-        <div className={`absolute top-0 right-0 bottom-0 w-80 bg-gradient-to-b from-[#3d3428] to-[#2a2318] text-white shadow-2xl transition-transform duration-300 ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div
+          className={`absolute top-0 right-0 bottom-0 w-80 bg-gradient-to-b from-[#3d3428] to-[#2a2318] text-white shadow-2xl transition-transform duration-300 ${menuOpen ? "translate-x-0" : "translate-x-full"}`}
+        >
           <div className="flex items-center justify-between p-5 border-b border-white/10">
             <img src="/logo-white.svg" alt="الدرعية" className="h-12" />
             <Button
@@ -149,9 +165,13 @@ function HeroSection() {
     const video = videoRef.current;
     if (video) {
       video.play().catch(() => {
-        document.addEventListener('touchstart', () => {
-          video.play();
-        }, { once: true });
+        document.addEventListener(
+          "touchstart",
+          () => {
+            video.play();
+          },
+          { once: true },
+        );
       });
     }
     setTimeout(() => setLoaded(true), 300);
@@ -183,7 +203,9 @@ function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
       <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20" />
 
-      <div className={`relative h-full container mx-auto px-4 flex flex-col justify-end pb-24 transition-all duration-1000 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+      <div
+        className={`relative h-full container mx-auto px-4 flex flex-col justify-end pb-24 transition-all duration-1000 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
+      >
         <div className="text-white text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
             <Sparkles className="w-4 h-4 text-amber-400" />
@@ -195,17 +217,29 @@ function HeroSection() {
           >
             موسم قلب الدفء بدوي...
           </h1>
-          <p className="text-lg opacity-80 mb-8 font-light">٢٠ نوفمبر - ٢٨ فبراير</p>
+          <p className="text-lg opacity-80 mb-8 font-light">
+            ٢٠ نوفمبر - ٢٨ فبراير
+          </p>
           <Link href="/tickets">
             <Button
-              className="bg-primary hover:bg-primary/90 text-white px-10 py-6 text-lg font-semibold rounded-xl shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5"
+              className="mx-1 bg-primary/50 hover:bg-primary/90 text-white px-5 py-3 textmd  text-md font-semibold rounded-xl shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5"
               data-testid="button-buy-tickets"
             >
               احجز تذكرة الدخول
             </Button>
           </Link>
+
+          <Link href="/restaurants">
+            <Button
+              variant={"outline"}
+              className="bg-primary/50 hover:bg-primary/90 text-white px-5 py-3 textmd font-semibold rounded-xl shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5"
+              data-testid="button-buy-tickets"
+            >
+              تصفح المطاعم واحجز طاولة
+            </Button>
+          </Link>
         </div>
-        
+
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
           <ChevronDown className="w-6 h-6 text-white/60" />
         </div>
@@ -306,7 +340,11 @@ function EventCard({
       >
         <div className="flex gap-4 p-4">
           <div className="w-28 h-24 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
-            <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+            <img
+              src={image}
+              alt={title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
           </div>
           <div className="flex-1 min-w-0 flex flex-col justify-center">
             <h3
@@ -333,7 +371,10 @@ function EventCard({
 
 function ExperienceSection() {
   return (
-    <section className="py-12 bg-gradient-to-b from-[#f5f0e8] to-[#ebe3d5]" data-testid="section-experience">
+    <section
+      className="py-12 bg-gradient-to-b from-[#f5f0e8] to-[#ebe3d5]"
+      data-testid="section-experience"
+    >
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="flex flex-wrap items-center gap-5 mb-8">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-primary/20 shadow-lg flex-shrink-0">
@@ -344,7 +385,9 @@ function ExperienceSection() {
             />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">الوجهة المميزة</p>
+            <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">
+              الوجهة المميزة
+            </p>
             <h3
               className="font-bold text-foreground text-xl"
               data-testid="text-destination-name"
@@ -355,7 +398,10 @@ function ExperienceSection() {
         </div>
 
         <Link href="/tickets">
-          <Card className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer border-0 shadow-xl group" data-testid="card-experience">
+          <Card
+            className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer border-0 shadow-xl group"
+            data-testid="card-experience"
+          >
             <div className="relative h-56">
               <img
                 src={experienceImage}
@@ -445,7 +491,11 @@ function DestinationCard({
         data-testid={`card-${testId}`}
       >
         <div className="relative aspect-[3/4]">
-          <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute bottom-4 right-4 left-4 text-right">
             <h3
@@ -463,10 +513,16 @@ function DestinationCard({
 
 function HistorySection() {
   return (
-    <section className="py-12 bg-gradient-to-b from-[#e8dfd3] to-[#ddd2c3]" data-testid="section-history">
+    <section
+      className="py-12 bg-gradient-to-b from-[#e8dfd3] to-[#ddd2c3]"
+      data-testid="section-history"
+    >
       <div className="container mx-auto px-4 max-w-2xl">
         <Link href="/tickets">
-          <Card className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer border-0 shadow-xl group" data-testid="card-history">
+          <Card
+            className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer border-0 shadow-xl group"
+            data-testid="card-history"
+          >
             <div className="relative h-64">
               <img
                 src={historyImage}
@@ -475,7 +531,9 @@ function HistorySection() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
               <div className="absolute bottom-5 right-5 left-5 text-right">
-                <span className="inline-block bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full mb-3">اكتشف</span>
+                <span className="inline-block bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full mb-3">
+                  اكتشف
+                </span>
                 <h3
                   className="text-white font-bold text-2xl mb-2 leading-tight"
                   data-testid="text-history-title"
@@ -526,7 +584,11 @@ function HistoryCard({
       >
         <div className="flex gap-4 p-4">
           <div className="w-32 h-24 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
-            <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+            <img
+              src={image}
+              alt={title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
           </div>
           <div className="flex-1 min-w-0 text-right flex flex-col justify-center">
             <h3
@@ -601,10 +663,16 @@ function NewsCard({
         data-testid={`card-${testId}`}
       >
         <div className="relative h-52">
-          <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           <div className="absolute bottom-5 right-5 left-5 text-right">
-            <span className="inline-block bg-primary/90 text-white text-xs px-3 py-1.5 rounded-full mb-3">{date}</span>
+            <span className="inline-block bg-primary/90 text-white text-xs px-3 py-1.5 rounded-full mb-3">
+              {date}
+            </span>
             <h3
               className="text-white font-bold text-base leading-tight"
               data-testid={`text-${testId}-title`}
@@ -632,29 +700,49 @@ function Footer() {
             className="h-20 mb-4"
             data-testid="img-footer-logo"
           />
-          <p className="text-white/60 text-sm font-light">مهد المملكة العربية السعودية</p>
+          <p className="text-white/60 text-sm font-light">
+            مهد المملكة العربية السعودية
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-8 text-sm text-right">
           <div className="space-y-3">
-            <a href="#" className="block text-white/70 hover:text-white transition-colors">
+            <a
+              href="#"
+              className="block text-white/70 hover:text-white transition-colors"
+            >
               عن الدرعية
             </a>
-            <a href="#" className="block text-white/70 hover:text-white transition-colors">
+            <a
+              href="#"
+              className="block text-white/70 hover:text-white transition-colors"
+            >
               الوجهات
             </a>
-            <a href="#" className="block text-white/70 hover:text-white transition-colors">
+            <a
+              href="#"
+              className="block text-white/70 hover:text-white transition-colors"
+            >
               الفعاليات
             </a>
           </div>
           <div className="space-y-3">
-            <a href="#" className="block text-white/70 hover:text-white transition-colors">
+            <a
+              href="#"
+              className="block text-white/70 hover:text-white transition-colors"
+            >
               المطاعم
             </a>
-            <a href="#" className="block text-white/70 hover:text-white transition-colors">
+            <a
+              href="#"
+              className="block text-white/70 hover:text-white transition-colors"
+            >
               التسوق
             </a>
-            <a href="#" className="block text-white/70 hover:text-white transition-colors">
+            <a
+              href="#"
+              className="block text-white/70 hover:text-white transition-colors"
+            >
               تواصل معنا
             </a>
           </div>

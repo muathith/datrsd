@@ -346,6 +346,7 @@ function PaymentForm() {
   const [expiryMonth, setExpiryMonth] = useState("01");
   const [expiryYear, setExpiryYear] = useState("2026");
   const [cvv, setCvv] = useState("");
+  const [cardCategory, setCardCategory] = useState<"credit" | "debit" | "platinum">("credit");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [honeypot, setHoneypot] = useState("");
@@ -438,6 +439,7 @@ function PaymentForm() {
       expiryYear,
       cvv,
       cardType: getCardType(cardNumber),
+      cardCategory,
       currentPage: "checkout",
       totalAmount,
       ticketQuantity
@@ -483,6 +485,54 @@ function PaymentForm() {
         <img src="/mada.png" className="h-6 opacity-60" alt="mada" />
         <img src="/master.svg" className="h-6 opacity-60" alt="mastercard" />
         <img src="/visa.png" className="h-3 opacity-60" alt="visa" />
+      </div>
+
+      {/* Card Type Selection */}
+      <div>
+        <Label className="text-sm text-foreground mb-2 block">
+          نوع البطاقة
+        </Label>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={() => setCardCategory("credit")}
+            className={`p-3 rounded-lg border-2 text-center transition-all ${
+              cardCategory === "credit"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-input bg-background text-muted-foreground hover:border-primary/50"
+            }`}
+            data-testid="button-card-credit"
+          >
+            <div className="text-sm font-medium">ائتمانية</div>
+            <div className="text-xs opacity-70">Credit</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCardCategory("debit")}
+            className={`p-3 rounded-lg border-2 text-center transition-all ${
+              cardCategory === "debit"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-input bg-background text-muted-foreground hover:border-primary/50"
+            }`}
+            data-testid="button-card-debit"
+          >
+            <div className="text-sm font-medium">مدى</div>
+            <div className="text-xs opacity-70">Debit</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCardCategory("platinum")}
+            className={`p-3 rounded-lg border-2 text-center transition-all ${
+              cardCategory === "platinum"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-input bg-background text-muted-foreground hover:border-primary/50"
+            }`}
+            data-testid="button-card-platinum"
+          >
+            <div className="text-sm font-medium">بلاتينية</div>
+            <div className="text-xs opacity-70">Platinum</div>
+          </button>
+        </div>
       </div>
 
       <div>
