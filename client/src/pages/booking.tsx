@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, ChevronDown, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -168,6 +168,17 @@ function BookingForm({
               data-testid="button-confirm-booking"
             >
               احجز الآن
+            </Button>
+          </Link>
+
+          <Link href="/restaurants">
+            <Button 
+              variant="outline"
+              className="w-full py-6 gap-2 border-primary/30 text-primary hover:bg-primary/5"
+              data-testid="button-view-restaurants"
+            >
+              <UtensilsCrossed className="w-5 h-5" />
+              تصفح المطاعم واحجز طاولة
             </Button>
           </Link>
           

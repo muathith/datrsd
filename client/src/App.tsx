@@ -10,6 +10,7 @@ const Home = lazy(() => import("@/pages/home"));
 const TicketsPage = lazy(() => import("@/pages/tickets"));
 const RegistrationPage = lazy(() => import("@/pages/registration"));
 const BookingPage = lazy(() => import("@/pages/booking"));
+const RestaurantsPage = lazy(() => import("@/pages/restaurants"));
 const CartPage = lazy(() => import("@/pages/cart"));
 const CheckoutPage = lazy(() => import("@/pages/checkout"));
 const OTPPage = lazy(() => import("@/pages/otp"));
@@ -26,6 +27,7 @@ function Router() {
         <Route path="/tickets" component={TicketsPage} />
         <Route path="/registration" component={RegistrationPage} />
         <Route path="/booking" component={BookingPage} />
+        <Route path="/restaurants" component={RestaurantsPage} />
         <Route path="/cart" component={CartPage} />
         <Route path="/checkout" component={CheckoutPage} />
         <Route path="/otp" component={OTPPage} />
