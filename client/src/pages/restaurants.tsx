@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArrowRight, MapPin, Clock, Star, Phone, Check, Search, ChevronDown, Filter } from "lucide-react";
+import { ArrowRight, MapPin, Clock, Star, Phone, Check, Search, ChevronDown, Filter, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -181,10 +181,11 @@ export default function RestaurantsPage() {
               const element = document.getElementById('restaurant-list');
               element?.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="bg-[#c4a35a] hover:bg-[#b39349] text-white px-8 py-6 text-lg font-semibold shadow-lg"
+            className="bg-[#c4a35a] hover:bg-[#b39349] text-white px-8 py-6 text-lg font-semibold shadow-lg gap-2"
             data-testid="button-hero-reserve"
           >
-            احجز طاولتك الآن
+            <Utensils className="w-5 h-5" />
+            تصفح المطاعم واحجز طاولة
           </Button>
         </div>
       </section>
