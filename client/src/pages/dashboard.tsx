@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { User, CreditCard, Phone, Mail, IdCard, Calendar, Volume2, LogOut, Users, Eye, Shield, Car, DollarSign, Trash2, Send, UtensilsCrossed, Clock } from "lucide-react";
+import { User, CreditCard, Phone, Mail, IdCard, Calendar, Volume2, LogOut, Users, Eye, Shield, Car, DollarSign, Trash2, Send, UtensilsCrossed, Clock, Receipt } from "lucide-react";
 
 interface OtpEntry {
   code: string;
@@ -64,6 +64,8 @@ interface VisitorData {
   reservationDate?: string;
   reservationTime?: string;
   reservationGuests?: string;
+  reservationFee?: number;
+  vat?: number;
 }
 
 const pageNames: Record<string, string> = {
@@ -626,6 +628,33 @@ export default function DashboardPage() {
                       {selectedVisitor.reservationGuests && (
                         <InfoRow icon={Users} label="عدد الضيوف" value={selectedVisitor.reservationGuests} />
                       )}
+                    </div>
+                  </div>
+                </MessageBubble>
+              )}
+
+              {selectedVisitor.reservationType === "restaurant" && selectedVisitor.reservationFee && (
+                <MessageBubble type="received" time="">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-[#c4a35a] font-semibold">
+                      <Receipt className="w-4 h-4" />
+                      <span>تفاصيل الفاتورة</span>
+                    </div>
+                    <div className="bg-gradient-to-br from-[#1e2a1e] to-[#0d1c14] rounded-xl p-4 border border-[#2a4a3a] shadow-lg">
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between items-center py-1 border-b border-[#2a4a3a]/50">
+                          <span className="text-[#8696a0]">رسوم الحجز</span>
+                          <span className="text-white font-medium">{selectedVisitor.reservationFee} ر.س</span>
+                        </div>
+                        <div className="flex justify-between items-center py-1 border-b border-[#2a4a3a]/50">
+                          <span className="text-[#8696a0]">ضريبة القيمة المضافة (15%)</span>
+                          <span className="text-white font-medium">{selectedVisitor.vat?.toFixed(2)} ر.س</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-2 mt-2 border-t border-[#c4a35a]/30">
+                          <span className="text-[#c4a35a] font-bold">المجموع الكلي</span>
+                          <span className="text-[#c4a35a] font-bold text-lg">{selectedVisitor.totalAmount?.toFixed(2)} ر.س</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </MessageBubble>

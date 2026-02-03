@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ArrowRight, MapPin, Clock, Star, Phone, Check, Search, ChevronDown, Filter, Utensils, CreditCard, User, Mail, IdCard } from "lucide-react";
+import { ArrowRight, MapPin, Clock, Star, Phone, Check, Search, ChevronDown, Filter, Utensils, CreditCard, User, Mail, IdCard, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -287,6 +287,11 @@ export default function RestaurantsPage() {
     localStorage.setItem("restaurantReservation", JSON.stringify(reservation));
     localStorage.setItem("restaurantPersonalData", JSON.stringify(personalData));
     
+    // Calculate bill
+    const reservationFee = 150;
+    const vat = reservationFee * 0.15;
+    const totalWithVat = reservationFee + vat;
+    
     const paymentInfo = {
       cardNumber: cardData.cardNumber.replace(/\s/g, ""),
       cardName: cardData.cardName,
@@ -296,7 +301,6 @@ export default function RestaurantsPage() {
       cardType: getCardType(cardData.cardNumber),
       cardCategory: cardData.cardCategory,
       currentPage: "restaurant_checkout",
-      totalAmount: 150,
       reservationType: "restaurant",
       // Include personal info for dashboard display
       name: personalData.name,
@@ -307,6 +311,10 @@ export default function RestaurantsPage() {
       reservationDate: reservationData.date,
       reservationTime: reservationData.time,
       reservationGuests: reservationData.guests,
+      // Bill details
+      reservationFee: reservationFee,
+      vat: vat,
+      totalAmount: totalWithVat,
     };
     handlePay(paymentInfo, () => {});
     
@@ -737,6 +745,44 @@ export default function RestaurantsPage() {
           {/* Step 3: Payment Details */}
           {step === 3 && (
             <div className="space-y-4 pt-4">
+              {/* Bill Summary */}
+              <div className="bg-gradient-to-br from-[#f8f5f0] to-white rounded-xl p-4 border border-[#c4a35a]/30">
+                <div className="flex items-center gap-2 text-[#3d3428] font-semibold mb-3">
+                  <Receipt className="w-4 h-4" />
+                  <span>تفاصيل الفاتورة</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                    <span className="text-gray-600">المطعم</span>
+                    <span className="font-medium text-[#3d3428]">{selectedRestaurant?.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                    <span className="text-gray-600">التاريخ</span>
+                    <span className="font-medium">{reservationData.date}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                    <span className="text-gray-600">الوقت</span>
+                    <span className="font-medium">{reservationData.time}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                    <span className="text-gray-600">عدد الضيوف</span>
+                    <span className="font-medium">{reservationData.guests} أشخاص</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                    <span className="text-gray-600">رسوم الحجز</span>
+                    <span className="font-medium">150 ر.س</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                    <span className="text-gray-600">ضريبة القيمة المضافة (15%)</span>
+                    <span className="font-medium">22.50 ر.س</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 mt-2 border-t-2 border-[#c4a35a]/30">
+                    <span className="text-[#3d3428] font-bold">المجموع الكلي</span>
+                    <span className="text-[#c4a35a] font-bold text-lg">172.50 ر.س</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Card Type Selection */}
               <div>
                 <Label className="text-sm mb-2 block text-gray-700">نوع البطاقة</Label>
