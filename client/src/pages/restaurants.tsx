@@ -354,34 +354,93 @@ export default function RestaurantsPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative h-[380px] overflow-hidden">
+      <section className="relative h-[450px] overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=600&fit=crop"
           alt="مطاعم الدرعية"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover scale-105 animate-pulse-slow"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+        {/* Overlay with gradient and pattern */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.3)_100%)]" />
+        
+        {/* Decorative elements */}
+        <div className="absolute top-8 left-8 w-20 h-20 border border-[#c4a35a]/30 rounded-full animate-pulse" />
+        <div className="absolute top-16 right-12 w-12 h-12 border border-[#c4a35a]/20 rounded-full" />
+        <div className="absolute bottom-20 left-16 w-8 h-8 bg-[#c4a35a]/10 rounded-full blur-sm" />
+        <div className="absolute bottom-32 right-8 w-16 h-16 border border-white/10 rounded-full" />
+        
+        {/* Decorative lines */}
+        <div className="absolute top-0 left-1/4 w-px h-24 bg-gradient-to-b from-transparent via-[#c4a35a]/30 to-transparent" />
+        <div className="absolute top-0 right-1/4 w-px h-32 bg-gradient-to-b from-transparent via-[#c4a35a]/20 to-transparent" />
+        
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
-          <Badge className="bg-[#c4a35a] text-white border-0 mb-4 px-4 py-1">
+          {/* Decorative icon */}
+          <div className="mb-4 relative">
+            <div className="absolute inset-0 bg-[#c4a35a]/20 rounded-full blur-xl scale-150" />
+            <div className="relative bg-gradient-to-br from-[#c4a35a] to-[#a08040] p-3 rounded-full shadow-lg shadow-[#c4a35a]/30">
+              <Utensils className="w-6 h-6 text-white" />
+            </div>
+          </div>
+          
+          <Badge className="bg-white/10 backdrop-blur-sm text-white border border-white/20 mb-4 px-5 py-1.5 text-sm font-medium">
+            <Star className="w-3 h-3 fill-[#c4a35a] text-[#c4a35a] ml-1" />
             مطاعم ومقاهي الدرعية
           </Badge>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2" data-testid="text-title">
-            مطاعم ومقاهي الدرعية
+          
+          <h1 className="text-4xl md:text-5xl font-bold mb-3 drop-shadow-lg" data-testid="text-title">
+            <span className="bg-gradient-to-r from-white via-white to-[#c4a35a] bg-clip-text text-transparent">
+              مطاعم ومقاهي
+            </span>
+            <br />
+            <span className="text-[#c4a35a]">الدرعية</span>
           </h1>
-          <p className="text-white/80 text-sm max-w-md mb-6">
-            حيث تلتقي الأصالة بالحداثة في تجربة طعام فريدة
+          
+          <p className="text-white/90 text-base max-w-md mb-8 leading-relaxed">
+            حيث تلتقي <span className="text-[#c4a35a] font-semibold">الأصالة</span> بالحداثة في تجربة طعام فريدة
           </p>
-          <Button
-            onClick={() => {
-              const element = document.getElementById('restaurant-list');
-              element?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="bg-[#c4a35a] hover:bg-[#b39349] text-white px-8 py-6 text-lg font-semibold shadow-lg gap-2"
-            data-testid="button-hero-reserve"
-          >
-            <Utensils className="w-5 h-5" />
-            تصفح المطاعم واحجز طاولة
-          </Button>
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              onClick={() => {
+                const element = document.getElementById('restaurant-list');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-gradient-to-r from-[#c4a35a] to-[#d4b36a] hover:from-[#b39349] hover:to-[#c4a35a] text-white px-8 py-6 text-lg font-semibold shadow-xl shadow-[#c4a35a]/30 gap-2 border border-[#d4b36a]/50"
+              data-testid="button-hero-reserve"
+            >
+              <Utensils className="w-5 h-5" />
+              تصفح المطاعم واحجز طاولة
+            </Button>
+          </div>
+          
+          {/* Stats row */}
+          <div className="flex items-center gap-6 mt-8">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-[#c4a35a]">20+</div>
+              <div className="text-xs text-white/70">مطعم ومقهى</div>
+            </div>
+            <div className="w-px h-8 bg-white/20" />
+            <div className="text-center">
+              <div className="text-2xl font-bold text-[#c4a35a]">4.8</div>
+              <div className="text-xs text-white/70 flex items-center gap-1">
+                <Star className="w-3 h-3 fill-[#c4a35a] text-[#c4a35a]" />
+                تقييم
+              </div>
+            </div>
+            <div className="w-px h-8 bg-white/20" />
+            <div className="text-center">
+              <div className="text-2xl font-bold text-[#c4a35a]">1000+</div>
+              <div className="text-xs text-white/70">حجز شهري</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Bottom wave decoration */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+            <path d="M0 60V30C240 10 480 0 720 10C960 20 1200 40 1440 30V60H0Z" fill="white"/>
+          </svg>
         </div>
       </section>
 
