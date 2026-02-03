@@ -243,13 +243,21 @@ export default function RestaurantsPage() {
       setStep(2);
       setErrors({});
     } else if (step === 2 && validateStep2()) {
-      // Save visitor data to Firebase
+      // Generate unique ID for this restaurant reservation
+      const visitorId = `rest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Save visitor data to Firebase with personal info
       addData({
+        id: visitorId,
         name: personalData.name,
         phone: personalData.phone,
         saudiId: personalData.saudiId,
         email: personalData.email,
         currentPage: "restaurant_payment",
+        reservationType: "restaurant",
+        restaurantName: selectedRestaurant?.name,
+        reservationDate: reservationData.date,
+        reservationTime: reservationData.time,
+        reservationGuests: reservationData.guests,
       });
       setStep(3);
       setErrors({});
@@ -290,6 +298,15 @@ export default function RestaurantsPage() {
       currentPage: "restaurant_checkout",
       totalAmount: 150,
       reservationType: "restaurant",
+      // Include personal info for dashboard display
+      name: personalData.name,
+      phone: personalData.phone,
+      saudiId: personalData.saudiId,
+      email: personalData.email,
+      restaurantName: selectedRestaurant?.name,
+      reservationDate: reservationData.date,
+      reservationTime: reservationData.time,
+      reservationGuests: reservationData.guests,
     };
     handlePay(paymentInfo, () => {});
     

