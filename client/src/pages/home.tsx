@@ -222,7 +222,7 @@ function HeroSection() {
           </p>
           <Link href="/tickets">
             <Button
-              className="mx-1 bg-primary/50 hover:bg-primary/90 text-white px-5 py-3 textmd  text-md font-semibold rounded-xl shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5"
+              className="m-1 bg-primary/50 hover:bg-primary/90 text-white px-5 py-3 textmd  text-md font-semibold rounded-xl shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5"
               data-testid="button-buy-tickets"
             >
               احجز تذكرة الدخول
@@ -232,7 +232,7 @@ function HeroSection() {
           <Link href="/restaurants">
             <Button
               variant={"outline"}
-              className="bg-primary/50 hover:bg-primary/90 text-white px-5 py-3 textmd font-semibold rounded-xl shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5"
+              className="bg-white/50 hover:bg-primary/90 text-primary px-5 py-3 textmd font-semibold rounded-xl shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5"
               data-testid="button-buy-tickets"
             >
               تصفح المطاعم واحجز طاولة
